@@ -24,8 +24,9 @@ function render() {
   set('next-age', a.years + 1);
   set('birthday-date', `${new Intl.DateTimeFormat('en-US', {timeZone:ZONE, month:'long',day:'numeric',year:'numeric'}).format(a.nextBirthday)} · 3:02:00 PM EDT`);
   for (const key of ['days','hours','minutes','seconds']) set('remaining-' + key, pad(a.remaining[key]));
-  set('remaining-total', `${number(a.remainingSeconds)} seconds until your next birthday.`);
+  set('remaining-total', `${number(a.remainingSeconds)} seconds remaining`);
   set('year-progress', decimal(a.yearProgress * 100, 2) + '%');
+  set('age-progress-label', `OF AGE ${a.years} COMPLETED`);
   $('orbit-progress').style.strokeDashoffset = String(615.752 * (1 - a.yearProgress));
   $('age-panel').setAttribute('aria-busy', 'false');
   $('freeze').disabled = false;
@@ -83,14 +84,14 @@ $('freeze').addEventListener('click', () => {
   frozen = frozen === null ? current.now : null;
   $('freeze').replaceChildren(Object.assign(document.createElement('span'), {textContent:frozen === null ? 'Ⅱ' : '▷',ariaHidden:'true'}), document.createTextNode(frozen === null ? ' Freeze moment' : ' Resume live'));
   updateStatus();render();
-  toast(frozen === null ? 'Back to the present.' : 'This moment is yours to keep.');
+  toast(frozen === null ? 'Live resumed' : 'Snapshot frozen');
 });
 $('resync').addEventListener('click', () => sync(3));
 $('copy').addEventListener('click', async () => {
   if (!current) return;
   const a = current;
   const text = `DATE FROM MY BIRTH\nTimestamp: ${timestamp(a.now)}\nUTC: ${new Date(a.now).toISOString()}\nBirth: 2012-05-21 15:02:00 EDT (2012-05-21T19:02:00Z)\n\nAge: ${a.years} years, ${a.months} months, ${a.days} days, ${a.hours} hours, ${a.minutes} minutes, ${a.seconds} seconds\nDecimal years: approximately ${a.decimalYears.toFixed(12)}\nExact year expression: ${a.years} + ${a.yearElapsed}/${a.yearLength}\nFull 24-hour days: ${a.fullDays}\nTotal hours: ${a.totalSeconds}/3600 (exact); ${a.fullHours} hours + ${Math.floor(a.totalSeconds % 3600 / 60)} minutes + ${a.totalSeconds % 60} seconds\nTotal minutes: ${a.totalSeconds}/60 (exact); ${a.fullMinutes} minutes + ${a.totalSeconds % 60} seconds\nTotal seconds: ${a.totalSeconds}\nNext birthday: ${timestamp(a.nextBirthday)}\nRemaining: ${a.remaining.days} days, ${a.remaining.hours} hours, ${a.remaining.minutes} minutes, ${a.remaining.seconds} seconds (${a.remainingSeconds} seconds)\n\nCalendar units use America/New_York. Totals use standard Unix time; leap seconds excluded. ${clockSource}.`;
-  try {await navigator.clipboard.writeText(text);toast('Snapshot copied, down to the second.');}
+  try {await navigator.clipboard.writeText(text);toast('Snapshot copied');}
   catch {toast('Clipboard unavailable. You can select and copy the numbers.');}
 });
 document.addEventListener('visibilitychange', () => {if (!document.hidden) sync(3);});
