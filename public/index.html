@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#10130f">
+  <meta name="description" content="Every second, accounted for. A live age clock anchored to Maryland time.">
+  <title>Date From My Birth — Every second counts.</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/style.css">
+  <script type="module" src="/app.js"></script>
+</head>
+<body>
+  <div class="ambient" aria-hidden="true"></div>
+  <div class="shell">
+    <header>
+      <a class="brand" href="/" aria-label="Date from my birth home"><span class="brand-symbol" aria-hidden="true">✳</span> DATE FROM MY BIRTH<span class="brand-period">.</span></a>
+      <span class="header-note">A LITTLE PERSPECTIVE ON TIME</span>
+      <a class="repo-link" href="https://github.com/BadBugs12-Dev/datefrommybirth" target="_blank" rel="noopener noreferrer">View source <span aria-hidden="true">↗</span></a>
+    </header>
+    <main>
+      <section class="intro" aria-labelledby="title">
+        <div>
+          <p class="eyebrow"><span class="dot"></span> YOUR LIFE, IN REAL TIME</p>
+          <h1 id="title">Every second<br>has a <em>story.</em></h1>
+          <p class="intro-copy">This is how long yours has been unfolding.</p>
+        </div>
+        <div class="birth-record">
+          <span class="small-label">IT ALL STARTED HERE</span>
+          <p>May 21, 2012<span class="record-star" aria-hidden="true">✦</span></p>
+          <span>3:02:00 PM EDT <span class="muted">/</span> Maryland, USA</span>
+          <span class="birth-utc">2012-05-21T19:02:00Z</span>
+        </div>
+      </section>
+      <section class="age-panel" aria-labelledby="age-title" aria-busy="true" id="age-panel">
+        <div class="panel-top"><h2 id="age-title" class="small-label">RIGHT NOW, YOU ARE</h2><span class="live-badge" id="mode-label"><span class="dot"></span> SYNCING</span></div>
+        <div class="age-grid" aria-label="Calendar age">
+          <div class="age-unit primary"><strong id="years">—</strong><span>YEARS</span></div>
+          <div class="age-unit"><strong id="months">—</strong><span>MONTHS</span></div>
+          <div class="age-unit"><strong id="days">—</strong><span>DAYS</span></div>
+          <div class="age-unit"><strong id="hours">—</strong><span>HOURS</span></div>
+          <div class="age-unit"><strong id="minutes">—</strong><span>MINUTES</span></div>
+          <div class="age-unit ticking"><strong id="seconds">—</strong><span>SECONDS</span></div>
+        </div>
+        <div class="timestamp-bar">
+          <div class="timestamp-info"><span class="crosshair" aria-hidden="true">⌖</span><div><span class="small-label">HAGERSTOWN, MARYLAND</span><time id="timestamp">Getting the current time automatically…</time></div></div>
+          <div class="clock-actions"><button id="freeze" type="button" disabled><span aria-hidden="true">Ⅱ</span> Freeze moment</button><button class="icon-button" id="copy" type="button" aria-label="Copy age snapshot" title="Copy age snapshot" disabled>⧉</button></div>
+        </div>
+        <div class="sync-line"><span id="sync-status" role="status">Connecting to the server clock…</span><button id="resync" class="text-button" type="button">Resync clock <span aria-hidden="true">↻</span></button></div>
+      </section>
+      <div class="section-heading"><h2>A life in numbers<span>.</span></h2><p>ONE MOMENT. A FEW DIFFERENT WAYS TO SEE IT.</p></div>
+      <section class="numbers-grid" aria-label="Total elapsed time">
+        <article class="stat-card decimal-card"><div class="stat-top"><h3>Decimal years</h3><span aria-hidden="true">01 / YR</span></div><p class="stat-value" id="decimal">—</p><p class="stat-caption">Your age, between birthdays <span class="approx">≈</span></p><p class="exact-line" id="decimal-exact">Waiting for clock sync</p></article>
+        <article class="stat-card"><div class="stat-top"><h3>Full days alive</h3><span aria-hidden="true">02 / D</span></div><p class="stat-value" id="total-days">—</p><p class="stat-caption">Complete 24-hour days</p><p class="exact-line" id="days-exact">Every leap day included</p></article>
+        <article class="stat-card"><div class="stat-top"><h3>Total hours</h3><span aria-hidden="true">03 / H</span></div><p class="stat-value compact" id="total-hours">—</p><p class="stat-caption">Hours of being you <span class="approx">≈</span></p><p class="exact-line" id="hours-exact">Waiting for clock sync</p></article>
+        <article class="stat-card"><div class="stat-top"><h3>Total minutes</h3><span aria-hidden="true">04 / M</span></div><p class="stat-value compact" id="total-minutes">—</p><p class="stat-caption">All the little moments <span class="approx">≈</span></p><p class="exact-line" id="minutes-exact">Waiting for clock sync</p></article>
+        <article class="stat-card seconds-card"><div class="stat-top"><h3>Total seconds alive</h3><span class="seconds-icon" aria-hidden="true">↗</span></div><div class="seconds-main"><p class="stat-value" id="total-seconds">—</p><span class="unit-tag">SECONDS & COUNTING</span></div><p class="stat-caption">An exact whole-second count from your birth timestamp.</p><div class="second-track" aria-hidden="true"></div></article>
+      </section>
+      <section class="birthday-panel" aria-labelledby="birthday-title">
+        <div class="birthday-content"><span class="eyebrow">THE NEXT CHAPTER</span><h2 id="birthday-title">Hello, <span id="next-age">—</span><em>.</em></h2><p id="birthday-date">Your next birthday, at exactly 3:02 PM.</p><div class="countdown" aria-label="Time until next birthday"><div><strong id="remaining-days">—</strong><span>DAYS</span></div><b aria-hidden="true">:</b><div><strong id="remaining-hours">—</strong><span>HOURS</span></div><b aria-hidden="true">:</b><div><strong id="remaining-minutes">—</strong><span>MINUTES</span></div><b aria-hidden="true">:</b><div><strong id="remaining-seconds">—</strong><span>SECONDS</span></div></div><p class="remaining-total" id="remaining-total">Calculating the exact countdown…</p></div>
+        <div class="orbit-wrap"><svg class="orbit" viewBox="0 0 240 240" aria-hidden="true"><circle class="orbit-track" cx="120" cy="120" r="98"/><circle id="orbit-progress" class="orbit-progress" cx="120" cy="120" r="98"/><circle class="inner-orbit" cx="120" cy="120" r="78"/></svg><div class="orbit-label"><span class="orbit-star" aria-hidden="true">✳</span><strong id="year-progress">—</strong><span>OF THIS YEAR LIVED</span></div><span class="orbit-caption">ANOTHER TRIP AROUND THE SUN</span></div>
+      </section>
+      <details class="method"><summary><span><span aria-hidden="true">⊕</span> The details behind the digits</span><span class="expand" aria-hidden="true">+</span></summary><div class="method-grid"><div><h3>Calendar age</h3><p>Whole years, then months, then local calendar days in America/New_York. The remaining hours, minutes, and seconds are elapsed time. Each calendar step keeps your 3:02 PM birth time. Month lengths, leap days, and daylight saving changes come from the time zone’s calendar rules.</p><p>A fall-back day can leave 24 remainder hours before the next calendar day is complete.</p></div><div><h3>Totals & decimal years</h3><p>Elapsed totals subtract your birth instant from the displayed instant. A full day is 86,400 seconds. Decimal years = whole years + elapsed seconds since your last birthday ÷ seconds between that birthday and the next. Decimal displays marked ≈ are rounded; the exact whole-unit remainders and fraction appear underneath.</p></div><div><h3>Where “now” comes from</h3><p>The clock samples this site’s server automatically, estimates network transit, then advances using a monotonic browser timer. It resyncs every minute and when you return to the tab. The displayed timestamp is truncated to a whole second; every calculation uses that same second.</p><p id="sync-detail">Sync details will appear here.</p></div><div><h3>A note on precision</h3><p>The arithmetic is exact for the shown timestamp. Live clock accuracy depends on the server clock and network delay, so this is not a certified time source. Standard JavaScript / Unix time does not count leap seconds. Your next birthday means May 21 at 3:02:00 PM Maryland time.</p></div></div></details>
+    </main>
+    <footer><span><span class="brand-symbol" aria-hidden="true">✳</span> EVERY SECOND, ACCOUNTED FOR.</span><span>Made for this one, extraordinary life.</span><a href="#title">Back to now <span aria-hidden="true">↑</span></a></footer>
+    <p id="toast" class="toast" role="status"></p>
+    <noscript><p class="noscript">Enable JavaScript to sync the current time and calculate your age.</p></noscript>
+  </div>
+</body>
+</html>
