@@ -1,6 +1,7 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {BIRTH, calculateAge, birthdayCountdown, anniversary, localInstant, timestamp} from './public/age.js';
+import {createBirthProfile,calculateCustomAge,customAnniversary,customBirthdayCountdown} from './public/custom-age.js';
 const ageAt = iso => calculateAge(Date.parse(iso));
 const fields = a => [a.years,a.months,a.days,a.hours,a.minutes,a.seconds];
 test('birth instant and exact first second', () => {
@@ -87,4 +88,61 @@ test('all upcoming birthdays through 75 keep exact zoned targets across leap yea
   }
   assert.throws(()=>birthdayCountdown(BIRTH,1.5),RangeError);
   assert.throws(()=>birthdayCountdown(BIRTH,0),RangeError);
+});
+test('custom calculator matches the original dashboard across 400 timestamps', () => {
+  const profile=createBirthProfile({date:'2012-05-21',time:'15:02:00'});
+  assert.equal(profile.birth,BIRTH);
+  for(let i=0;i<400;i++)assert.deepEqual(calculateCustomAge(BIRTH+i*1234567890,profile),calculateAge(BIRTH+i*1234567890));
+});
+test('custom birthdays support leap day and sequential month-end clamping', () => {
+  const leap=createBirthProfile({date:'2000-02-29',zone:'UTC'});
+  assert.equal(customAnniversary(leap,25),Date.parse('2025-02-28T00:00:00Z'));
+  assert.deepEqual(fields(calculateCustomAge(Date.parse('2025-02-28T00:00:00Z'),leap)),[25,0,0,0,0,0]);
+  assert.deepEqual(fields(calculateCustomAge(Date.parse('2025-03-28T00:00:00Z'),leap)),[25,1,0,0,0,0]);
+  const end=createBirthProfile({date:'2020-01-31',zone:'UTC'});
+  assert.deepEqual(fields(calculateCustomAge(Date.parse('2020-02-29T00:00:00Z'),end)),[0,1,0,0,0,0]);
+  assert.deepEqual(fields(calculateCustomAge(Date.parse('2020-03-30T00:00:00Z'),end)),[0,1,30,0,0,0]);
+});
+test('custom time zones and omitted birth time are explicit', () => {
+  const nepal=createBirthProfile({date:'2000-01-01',time:'12:34:56',zone:'Asia/Kathmandu'});
+  assert.equal(nepal.birth,Date.parse('2000-01-01T06:49:56Z'));
+  const midnight=createBirthProfile({date:'2000-01-01',zone:'America/New_York'});
+  assert.equal(midnight.birth,Date.parse('2000-01-01T05:00:00Z'));
+  assert.equal(midnight.timeAssumed,true);
+  assert.throws(()=>calculateCustomAge(midnight.birth-1,midnight),RangeError);
+  assert.throws(()=>createBirthProfile({date:'2025-02-29'}),RangeError);
+});
+test('custom DST birth gaps are rejected and repeated times can select either occurrence', () => {
+  assert.throws(()=>createBirthProfile({date:'2026-03-08',time:'02:30:00'}),/did not occur/);
+  const first=createBirthProfile({date:'2026-11-01',time:'01:30:00'});
+  const second=createBirthProfile({date:'2026-11-01',time:'01:30:00',occurrence:'later'});
+  assert.equal(first.choices.length,2);
+  assert.equal(first.birth,Date.parse('2026-11-01T05:30:00Z'));
+  assert.equal(second.birth-first.birth,3600000);
+  assert.deepEqual(fields(calculateCustomAge(second.birth,second)),[0,0,0,0,0,0]);
+});
+test('custom calendar anniversaries shift through a DST gap consistently', () => {
+  const profile=createBirthProfile({date:'2025-03-08',time:'02:30:00'});
+  assert.equal(customAnniversary(profile,1),Date.parse('2026-03-08T07:30:00Z'));
+  const a=calculateCustomAge(Date.parse('2026-03-08T07:30:00Z'),profile);
+  assert.deepEqual(fields(a),[1,0,0,0,0,0]);
+  const birthday=customBirthdayCountdown(a.now,profile,75);
+  assert.equal(a.now+birthday.remainingSeconds*1000,birthday.target);
+});
+test('custom age anchors reconstruct elapsed seconds for diverse dates and zones', () => {
+  for(const birth of [
+    {date:'1950-12-31',time:'23:59:59',zone:'Pacific/Auckland'},
+    {date:'2000-02-29',time:'02:30:00',zone:'America/New_York'},
+    {date:'1988-04-30',time:'00:00:00',zone:'Europe/London'},
+    {date:'2024-11-03',time:'01:30:00',zone:'America/New_York',occurrence:'later'}
+  ]){
+    const profile=createBirthProfile(birth);
+    for(let i=0;i<120;i++){
+      const a=calculateCustomAge(profile.birth+i*7890123456,profile);
+      assert.equal(a.calendarAnchor+(a.hours*3600+a.minutes*60+a.seconds)*1000,a.now);
+      assert.equal(profile.birth+a.totalSeconds*1000,a.now);
+      assert.ok(a.months>=0&&a.months<12&&a.days>=0&&a.days<32);
+      assert.ok(a.yearProgress>=0&&a.yearProgress<1);
+    }
+  }
 });

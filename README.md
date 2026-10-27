@@ -29,3 +29,9 @@ Import this repository, select **Other**, and leave the root directory at the re
 - All totals use standard JavaScript/Unix civil time, which excludes leap seconds. No claim of atomic-clock accuracy is made: network asymmetry and server-clock error can affect the live estimate. Arithmetic is exact for the explicitly displayed timestamp.
 
 No analytics, external fonts, tracking scripts, or third-party requests. Calendar calculations run in the browser. Birth details are intentionally part of this personalized public repository and page.
+
+## Custom age calculator
+
+The bottom section accepts another person's birth date, optional birth time, and IANA time zone (Maryland by default). It duplicates the age counters, totals, birthday picker, and age-year progress ring. Its Freeze and Copy controls are independent; only the synchronized server clock is shared. No entered birth data is sent to the server or persisted across reloads.
+
+A missing birth time explicitly assumes local midnight. Leap-day anniversaries use February 28 in non-leap years; calendar years and months clamp to valid dates. Nonexistent DST birth times are rejected, and repeated birth times offer the first or second occurrence. Subsequent calendar anchors use compatible DST disambiguation (first repeated occurrence, shift forward across a gap). The original personal age calculation is unchanged.

@@ -1,10 +1,12 @@
 import {calculateAge, birthdayCountdown, timestamp, ZONE} from './age.js';
+import {createCustomDashboard} from './custom-dashboard.js';
 const $ = id => document.getElementById(id);
 const number = n => n.toLocaleString('en-US');
 const pad = n => String(n).padStart(2, '0');
 const decimal = (n, digits) => n.toLocaleString('en-US', {minimumFractionDigits: digits, maximumFractionDigits: digits});
 let base = null, clockSource = '', frozen = null, current = null, syncing = false, lastSample = null, toastTimer;
 let selectedBirthdayAge = null, birthdayOptionsStart = null;
+const customDashboard = createCustomDashboard({now:()=>base===null?null:base+performance.now(),clock:()=>({source:clockSource,lastSample,syncing}),resync:()=>sync(3),notify:toast});
 function set(id, value) { const el = $(id); if (el.textContent !== String(value)) el.textContent = value; }
 function selectedBirthday(a) {
   return birthdayCountdown(a.now, selectedBirthdayAge ?? a.years + 1);
@@ -56,6 +58,7 @@ function render() {
   $('age-panel').setAttribute('aria-busy', 'false');
   $('freeze').disabled = false;
   $('copy').disabled = false;
+  customDashboard.render();
 }
 function updateStatus() {
   const isFrozen = frozen !== null;
