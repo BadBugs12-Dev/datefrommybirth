@@ -8,3 +8,6 @@
 
 main{padding-top:32px}.numbers-grid{margin-top:28px}
 @media(max-width:500px){main{padding-top:25px}}
+.birthday-select-wrap{position:relative;display:inline-block}.birthday-select-wrap select{appearance:none;-webkit-appearance:none;font:inherit;letter-spacing:inherit;line-height:inherit;color:inherit;background:transparent;border:0;border-bottom:1px solid #666666;border-radius:0;padding:0 30px 0 0;cursor:pointer;accent-color:#ffffff}.birthday-select-wrap select:focus-visible{outline:2px solid #ffffff;outline-offset:5px}.birthday-select-wrap select:disabled{opacity:.5;cursor:wait}.birthday-select-wrap option{font:16px var(--sans);letter-spacing:normal;background:#1c1c1c;color:#ffffff}.birthday-select-wrap option:checked{background:#444444;color:#ffffff}.birthday-select-arrow{position:absolute;right:3px;top:50%;transform:translateY(-50%);font:24px var(--sans);color:#cccccc;pointer-events:none}
+
+@media(max-width:500px){.extended-countdown .countdown{gap:clamp(3px,1.4vw,7px)}.extended-countdown .countdown div{min-width:0;flex-shrink:0}.extended-countdown .countdown div span{font-size:7px;letter-spacing:1px}.extended-countdown .countdown strong{font-size:clamp(20px,6vw,28px)}.extended-countdown .countdown b{font-size:20px}}

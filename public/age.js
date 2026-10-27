@@ -37,6 +37,15 @@ export function duration(seconds) {
   return {days: Math.floor(seconds / 86400), hours: Math.floor(seconds % 86400 / 3600),
     minutes: Math.floor(seconds % 3600 / 60), seconds: seconds % 60};
 }
+export function birthdayCountdown(inputMs, age) {
+  if (!Number.isFinite(inputMs) || inputMs < BIRTH || !Number.isInteger(age) || age < 1) {
+    throw new RangeError('A valid timestamp and birthday age are required');
+  }
+  const now = Math.floor(inputMs / 1000) * 1000;
+  const target = anniversary(2012 + age);
+  const remainingSeconds = Math.max(0, (target - now) / 1000);
+  return {age, target, remainingSeconds, remaining: duration(remainingSeconds)};
+}
 export function calculateAge(inputMs) {
   if (!Number.isFinite(inputMs) || inputMs < BIRTH) throw new RangeError('Timestamp must be on or after birth');
   const now = Math.floor(inputMs / 1000) * 1000;

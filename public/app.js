@@ -1,10 +1,32 @@
-import {calculateAge, timestamp, ZONE} from './age.js';
+import {calculateAge, birthdayCountdown, timestamp, ZONE} from './age.js';
 const $ = id => document.getElementById(id);
 const number = n => n.toLocaleString('en-US');
 const pad = n => String(n).padStart(2, '0');
 const decimal = (n, digits) => n.toLocaleString('en-US', {minimumFractionDigits: digits, maximumFractionDigits: digits});
 let base = null, clockSource = '', frozen = null, current = null, syncing = false, lastSample = null, toastTimer;
+let selectedBirthdayAge = null, birthdayOptionsStart = null;
 function set(id, value) { const el = $(id); if (el.textContent !== String(value)) el.textContent = value; }
+function selectedBirthday(a) {
+  return birthdayCountdown(a.now, selectedBirthdayAge ?? a.years + 1);
+}
+function updateBirthdayOptions(a) {
+  const nextAge = a.years + 1;
+  if (selectedBirthdayAge !== null && selectedBirthdayAge < nextAge) selectedBirthdayAge = null;
+  if (birthdayOptionsStart !== nextAge) {
+    const options = [];
+    for (let age = nextAge; age <= Math.max(75, nextAge); age++) {
+      const option = document.createElement('option');
+      option.value = age === nextAge ? 'next' : String(age);
+      option.textContent = String(age);
+      options.push(option);
+    }
+    $('birthday-age').replaceChildren(...options);
+    birthdayOptionsStart = nextAge;
+  }
+  const selectedValue = selectedBirthdayAge === null ? 'next' : String(selectedBirthdayAge);
+  if ($('birthday-age').value !== selectedValue) $('birthday-age').value = selectedValue;
+  $('birthday-age').disabled = false;
+}
 function render() {
   if (base === null) return;
   const a = calculateAge(frozen ?? base + performance.now());
@@ -21,10 +43,13 @@ function render() {
   set('total-minutes', decimal(a.totalMinutes, 3));
   set('minutes-exact', `Exact: ${number(a.fullMinutes)} m + ${a.totalSeconds % 60} s`);
   set('total-seconds', number(a.totalSeconds));
-  set('next-age', a.years + 1);
-  set('birthday-date', `${new Intl.DateTimeFormat('en-US', {timeZone:ZONE, month:'long',day:'numeric',year:'numeric'}).format(a.nextBirthday)} · 3:02:00 PM EDT`);
-  for (const key of ['days','hours','minutes','seconds']) set('remaining-' + key, pad(a.remaining[key]));
-  set('remaining-total', `${number(a.remainingSeconds)} seconds remaining`);
+  updateBirthdayOptions(a);
+  const birthday = selectedBirthday(a);
+  $('birthday-panel').classList.toggle('extended-countdown', birthday.remaining.days >= 1000);
+  set('birthday-label', selectedBirthdayAge === null ? 'NEXT BIRTHDAY' : 'BIRTHDAY COUNTDOWN');
+  set('birthday-date', `${new Intl.DateTimeFormat('en-US', {timeZone:ZONE, month:'long',day:'numeric',year:'numeric'}).format(birthday.target)} · 3:02:00 PM EDT`);
+  for (const key of ['days','hours','minutes','seconds']) set('remaining-' + key, pad(birthday.remaining[key]));
+  set('remaining-total', `${number(birthday.remainingSeconds)} seconds remaining`);
   set('year-progress', decimal(a.yearProgress * 100, 2) + '%');
   set('age-progress-label', `OF AGE ${a.years} COMPLETED`);
   $('orbit-progress').style.strokeDashoffset = String(615.752 * (1 - a.yearProgress));
@@ -87,11 +112,17 @@ $('freeze').addEventListener('click', () => {
   toast(frozen === null ? 'Live resumed' : 'Snapshot frozen');
 });
 $('resync').addEventListener('click', () => sync(3));
+$('birthday-age').addEventListener('change', () => {
+  selectedBirthdayAge = $('birthday-age').value === 'next' ? null : Number($('birthday-age').value);
+  render();
+});
 $('copy').addEventListener('click', async () => {
   if (!current) return;
   const a = current;
   const text = `DATE FROM MY BIRTH\nTimestamp: ${timestamp(a.now)}\nUTC: ${new Date(a.now).toISOString()}\nBirth: 2012-05-21 15:02:00 EDT (2012-05-21T19:02:00Z)\n\nAge: ${a.years} years, ${a.months} months, ${a.days} days, ${a.hours} hours, ${a.minutes} minutes, ${a.seconds} seconds\nDecimal years: approximately ${a.decimalYears.toFixed(12)}\nExact year expression: ${a.years} + ${a.yearElapsed}/${a.yearLength}\nFull 24-hour days: ${a.fullDays}\nTotal hours: ${a.totalSeconds}/3600 (exact); ${a.fullHours} hours + ${Math.floor(a.totalSeconds % 3600 / 60)} minutes + ${a.totalSeconds % 60} seconds\nTotal minutes: ${a.totalSeconds}/60 (exact); ${a.fullMinutes} minutes + ${a.totalSeconds % 60} seconds\nTotal seconds: ${a.totalSeconds}\nNext birthday: ${timestamp(a.nextBirthday)}\nRemaining: ${a.remaining.days} days, ${a.remaining.hours} hours, ${a.remaining.minutes} minutes, ${a.remaining.seconds} seconds (${a.remainingSeconds} seconds)\n\nCalendar units use America/New_York. Totals use standard Unix time; leap seconds excluded. ${clockSource}.`;
-  try {await navigator.clipboard.writeText(text);toast('Snapshot copied');}
+  const birthday = selectedBirthday(a);
+  const selectedText = selectedBirthdayAge === null ? '' : `\n\nSelected birthday: Age ${birthday.age}, ${timestamp(birthday.target)}\nSelected countdown: ${birthday.remaining.days} days, ${birthday.remaining.hours} hours, ${birthday.remaining.minutes} minutes, ${birthday.remaining.seconds} seconds (${birthday.remainingSeconds} seconds)`;
+  try {await navigator.clipboard.writeText(text + selectedText);toast('Snapshot copied');}
   catch {toast('Clipboard unavailable. You can select and copy the numbers.');}
 });
 document.addEventListener('visibilitychange', () => {if (!document.hidden) sync(3);});
