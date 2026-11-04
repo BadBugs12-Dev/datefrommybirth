@@ -1,4 +1,5 @@
 export const ZONE = 'America/New_York';
+export const MAX_BIRTHDAY_AGE = 120;
 export const BIRTH = Date.parse('2012-05-21T15:02:00-04:00');
 const DAY = 86400000;
 const partsFormatter = new Intl.DateTimeFormat('en-US', {

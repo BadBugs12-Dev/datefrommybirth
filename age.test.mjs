@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {BIRTH, calculateAge, birthdayCountdown, anniversary, localInstant, timestamp} from './public/age.js';
+import {BIRTH, MAX_BIRTHDAY_AGE, calculateAge, birthdayCountdown, anniversary, localInstant, timestamp} from './public/age.js';
 import {createBirthProfile,calculateCustomAge,customAnniversary,customBirthdayCountdown,parseZonedDateTime} from './public/custom-age.js';
 const ageAt = iso => calculateAge(Date.parse(iso));
 const fields = a => [a.years,a.months,a.days,a.hours,a.minutes,a.seconds];
@@ -69,10 +69,10 @@ test('invalid and prebirth timestamps are rejected', () => {
   assert.throws(()=>calculateAge(NaN),RangeError);
   assert.throws(()=>calculateAge(BIRTH-1),RangeError);
 });
-test('selected 75th birthday is May 21 2087 at the Maryland birth time', () => {
+test('selected 120th birthday is May 21 2132 at the Maryland birth time', () => {
   const now = Date.parse('2026-10-27T23:00:00Z');
-  const birthday = birthdayCountdown(now,75);
-  assert.equal(birthday.target,Date.parse('2087-05-21T19:02:00Z'));
+  const birthday = birthdayCountdown(now,MAX_BIRTHDAY_AGE);
+  assert.equal(birthday.target,Date.parse('2132-05-21T19:02:00Z'));
   assert.equal(now+birthday.remainingSeconds*1000,birthday.target);
   assert.equal(birthday.remaining.days*86400+birthday.remaining.hours*3600+birthday.remaining.minutes*60+birthday.remaining.seconds,birthday.remainingSeconds);
 });
@@ -85,10 +85,10 @@ test('selected countdown agrees with next birthday and handles exact rollover', 
   assert.equal(birthdayCountdown(anniversary(2087),75).remainingSeconds,0);
   assert.equal(birthdayCountdown(anniversary(2087)+1000,75).remainingSeconds,0);
 });
-test('all upcoming birthdays through 75 keep exact zoned targets across leap years and DST', () => {
+test('all upcoming birthdays through 120 keep exact zoned targets across leap years and DST', () => {
   for(const now of ['2026-10-27T23:00:00Z','2026-11-01T20:00:00Z','2028-02-29T20:00:00Z']) {
     const a=ageAt(now);
-    for(let age=a.years+1;age<=75;age++) {
+    for(let age=a.years+1;age<=MAX_BIRTHDAY_AGE;age++) {
       const birthday=birthdayCountdown(a.now,age);
       assert.equal(birthday.target,Date.parse(`${2012+age}-05-21T19:02:00Z`));
       assert.equal(birthday.remainingSeconds,(birthday.target-a.now)/1000);
@@ -134,7 +134,7 @@ test('custom calendar anniversaries shift through a DST gap consistently', () =>
   assert.equal(customAnniversary(profile,1),Date.parse('2026-03-08T07:30:00Z'));
   const a=calculateCustomAge(Date.parse('2026-03-08T07:30:00Z'),profile);
   assert.deepEqual(fields(a),[1,0,0,0,0,0]);
-  const birthday=customBirthdayCountdown(a.now,profile,75);
+  const birthday=customBirthdayCountdown(a.now,profile,MAX_BIRTHDAY_AGE);
   assert.equal(a.now+birthday.remainingSeconds*1000,birthday.target);
 });
 test('custom age anchors reconstruct elapsed seconds for diverse dates and zones', () => {

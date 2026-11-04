@@ -1,4 +1,5 @@
 import {createBirthProfile,calculateCustomAge,customBirthdayCountdown,customTimestamp} from './custom-age.js';
+import {MAX_BIRTHDAY_AGE} from './age.js';
 const number=n=>n.toLocaleString('en-US'),pad=n=>String(n).padStart(2,'0');
 const decimal=(n,digits)=>n.toLocaleString('en-US',{minimumFractionDigits:digits,maximumFractionDigits:digits});
 export function createCustomDashboard({now,clock,resync,notify}) {
@@ -51,7 +52,17 @@ export function createCustomDashboard({now,clock,resync,notify}) {
     set('total-minutes',decimal(a.totalMinutes,3));set('minutes-exact',`Exact: ${number(a.fullMinutes)} m + ${a.totalSeconds%60} s`);set('total-seconds',number(a.totalSeconds));
     const nextAge=a.years+1;
     if(selectedAge!==null&&selectedAge<nextAge)selectedAge=null;
-    if(optionsStart!==nextAge){const options=[];for(let age=nextAge;age<=Math.max(75,nextAge);age++){const option=document.createElement('option');option.value=age===nextAge?'next':String(age);option.textContent=String(age);options.push(option);}$('birthday-age').replaceChildren(...options);optionsStart=nextAge;}
+    if (optionsStart !== nextAge) {
+      const options = [];
+      for (let age = nextAge; age <= Math.max(MAX_BIRTHDAY_AGE, nextAge); age++) {
+        const option = document.createElement('option');
+        option.value = age === nextAge ? 'next' : String(age);
+        option.textContent = String(age);
+        options.push(option);
+      }
+      $('birthday-age').replaceChildren(...options);
+      optionsStart = nextAge;
+    }
     const value=selectedAge===null?'next':String(selectedAge);if($('birthday-age').value!==value)$('birthday-age').value=value;$('birthday-age').disabled=false;
     const birthday=selectedBirthday();$('birthday-panel').classList.toggle('extended-countdown',birthday.remaining.days>=1000);
     set('birthday-label',selectedAge===null?'NEXT BIRTHDAY':'BIRTHDAY COUNTDOWN');

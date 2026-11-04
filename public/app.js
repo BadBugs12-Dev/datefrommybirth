@@ -1,4 +1,4 @@
-import {BIRTH, calculateAge, birthdayCountdown, timestamp, ZONE} from './age.js';
+import {BIRTH, MAX_BIRTHDAY_AGE, calculateAge, birthdayCountdown, timestamp, ZONE} from './age.js';
 import {parseZonedDateTime} from './custom-age.js';
 import {createCustomDashboard} from './custom-dashboard.js';
 const $ = id => document.getElementById(id);
@@ -18,7 +18,7 @@ function updateBirthdayOptions(a) {
   if (selectedBirthdayAge !== null && selectedBirthdayAge <= nextAge) selectedBirthdayAge = null;
   if (birthdayOptionsStart !== nextAge) {
     const options = [];
-    for (let age = nextAge; age <= Math.max(75, nextAge); age++) {
+    for (let age = nextAge; age <= Math.max(MAX_BIRTHDAY_AGE, nextAge); age++) {
       const option = document.createElement('option');
       option.value = age === nextAge ? 'next' : String(age);
       option.textContent = String(age);
