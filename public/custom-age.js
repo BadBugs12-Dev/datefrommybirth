@@ -27,7 +27,7 @@ function resolve(p,zone,{strict=false,later=false}={}) {
   const wall=utc(p), offsets=offsetsFor(wall,zone);
   const choices=offsets.map(offset=>wall-offset).filter(ms=>same(parts(ms,zone),p)).sort((a,b)=>a-b);
   if (choices.length) return {instant:later?choices.at(-1):choices[0],choices};
-  if (strict) throw new RangeError('That local birth time did not occur because the clocks moved forward. Enter a valid birth time.');
+  if (strict) throw new RangeError('That local time did not occur because the clocks moved forward. Choose another time.');
   // Calendar anchors in a DST gap move forward by the gap (compatible disambiguation).
   return {instant:wall-Math.min(...offsets),choices:[]};
 }
@@ -41,19 +41,23 @@ function shifted(p,months=0,days=0) {
   const date=new Date(utc({...p,year,month,day:Math.min(p.day,monthDays(year,month))+days}));
   return {year:date.getUTCFullYear(),month:date.getUTCMonth()+1,day:date.getUTCDate(),hour:p.hour,minute:p.minute,second:p.second};
 }
-export function createBirthProfile({date,time='',zone='America/New_York',occurrence='earlier'}) {
+export function parseZonedDateTime({date,time,zone,occurrence='earlier'}) {
   const match=/^(\d{4})-(\d{2})-(\d{2})$/.exec(date??'');
-  if (!match) throw new RangeError('Enter a valid birth date.');
+  if (!match) throw new RangeError('Enter a valid date.');
   const [year,month,day]=match.slice(1).map(Number);
-  if (year<1||month<1||month>12||day<1||day>monthDays(year,month)) throw new RangeError('Enter a valid birth date.');
-  const clock=/^(\d{2}):(\d{2})(?::(\d{2}))?$/.exec(time||'00:00:00');
-  if (!clock) throw new RangeError('Enter a valid birth time.');
+  if (year<1||month<1||month>12||day<1||day>monthDays(year,month)) throw new RangeError('Enter a valid date.');
+  const clock=/^(\d{2}):(\d{2})(?::(\d{2}))?$/.exec(time??'');
+  if (!clock) throw new RangeError('Enter a valid time.');
   const hour=Number(clock[1]),minute=Number(clock[2]),second=Number(clock[3]??0);
-  if(hour>23||minute>59||second>59) throw new RangeError('Enter a valid birth time.');
-  try {formatter(zone);} catch {throw new RangeError('Choose a valid birth time zone.');}
+  if(hour>23||minute>59||second>59) throw new RangeError('Enter a valid time.');
+  try {formatter(zone);} catch {throw new RangeError('Choose a valid time zone.');}
   const wall={year,month,day,hour,minute,second};
   const resolved=resolve(wall,zone,{strict:true,later:occurrence==='later'});
-  return {birth:resolved.instant,wall,zone,choices:resolved.choices,timeAssumed:!time,date,time:time||'00:00:00'};
+  return {...resolved,wall};
+}
+export function createBirthProfile({date,time='',zone='America/New_York',occurrence='earlier'}) {
+  const resolved=parseZonedDateTime({date,time:time||'00:00:00',zone,occurrence});
+  return {birth:resolved.instant,wall:resolved.wall,zone,choices:resolved.choices,timeAssumed:!time,date,time:time||'00:00:00'};
 }
 export function customAnniversary(profile,age) {
   if(!Number.isInteger(age)||age<0) throw new RangeError('Birthday age must be a nonnegative integer.');

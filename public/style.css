@@ -16,3 +16,54 @@ main{padding-top:32px}.numbers-grid{margin-top:28px}
 @media(max-width:500px){.custom-form{grid-template-columns:1fr}.custom-section>h2{font-size:20px}.custom-form input,.custom-form select{font-size:16px}.custom-section .timestamp-info time{font-size:9px;overflow-wrap:anywhere}.custom-section .timestamp-info{min-width:0}.custom-section .timestamp-info>div{min-width:0}}
 .custom-section .wide-age .age-unit.primary strong{font-size:clamp(28px,4vw,70px)}
 @media(max-width:360px){.custom-section .numbers-grid{grid-template-columns:1fr}}
+
+.target-form {
+  margin-top: 24px;
+  padding: 20px;
+  background: #1a1a1a;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+.target-form h2 {
+  margin: 0 0 16px;
+  font-size: 16px;
+  font-weight: 500;
+}
+.target-form .target-fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.target-fields label {
+  flex: 1 1 160px;
+}
+.target-actions {
+  display: flex;
+  gap: 8px;
+}
+.target-actions #target-show {
+  background: #ededed;
+  color: #151515;
+}
+.target-actions #target-show:hover {
+  background: #ffffff;
+}
+.target-hint, .target-error {
+  margin: 12px 0 0;
+  font: 10px/1.7 var(--mono);
+}
+.target-hint {
+  color: #aaaaaa;
+}
+.target-error:empty {
+  display: none;
+}
+.target-form + .numbers-grid {
+  margin-top: 16px;
+}
+.target-form + .numbers-grid .stat-value {
+  overflow-wrap: anywhere;
+}
+#age-panel.wide-age .age-unit.primary strong {
+  font-size: clamp(26px, 4vw, 64px);
+}

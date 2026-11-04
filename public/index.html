@@ -30,6 +30,25 @@
         </div>
         <div class="sync-line"><span id="sync-status" role="status">Connecting to the server clock…</span><button id="resync" class="text-button" type="button">Resync clock <span aria-hidden="true">↻</span></button></div>
       </section>
+      <form class="target-form" id="target-form" aria-labelledby="target-title">
+        <h2 id="target-title">How old am I on this date at this time?</h2>
+        <div class="custom-form target-fields">
+          <label>Date (M/D/Y)<input id="target-date" type="date" min="2012-05-21" max="9999-12-31" required></label>
+          <label>Time (H:M:S)<input id="target-time" type="time" step="1" required></label>
+          <label id="target-occurrence-field" hidden>Time occurrence
+            <select id="target-occurrence" aria-label="Time occurrence for selected date">
+              <option value="earlier">First occurrence</option>
+              <option value="later">Second occurrence</option>
+            </select>
+          </label>
+          <div class="target-actions">
+            <button id="target-show" type="submit" disabled>Show age</button>
+            <button id="target-reset" type="button" aria-label="Reset to live age">Reset</button>
+          </div>
+        </div>
+        <p class="target-hint">Maryland time</p>
+        <p class="target-error" id="target-error" role="alert"></p>
+      </form>
       <section class="numbers-grid" aria-label="Total elapsed time">
         <article class="stat-card decimal-card"><div class="stat-top"><h3>Decimal years</h3><span aria-hidden="true">01 / YR</span></div><p class="stat-value" id="decimal">—</p><p class="stat-caption">Approximate <span class="approx">≈</span></p><p class="exact-line" id="decimal-exact">Waiting for clock sync</p></article>
         <article class="stat-card"><div class="stat-top"><h3>Full days alive</h3><span aria-hidden="true">02 / D</span></div><p class="stat-value" id="total-days">—</p><p class="stat-caption">Complete 24-hour days</p><p class="exact-line" id="days-exact">Every leap day included</p></article>

@@ -1,9 +1,17 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {BIRTH, calculateAge, birthdayCountdown, anniversary, localInstant, timestamp} from './public/age.js';
-import {createBirthProfile,calculateCustomAge,customAnniversary,customBirthdayCountdown} from './public/custom-age.js';
+import {createBirthProfile,calculateCustomAge,customAnniversary,customBirthdayCountdown,parseZonedDateTime} from './public/custom-age.js';
 const ageAt = iso => calculateAge(Date.parse(iso));
 const fields = a => [a.years,a.months,a.days,a.hours,a.minutes,a.seconds];
+test('a selected Maryland date uses its entered second and the dashboard birthday rollover', () => {
+  const selected = parseZonedDateTime({date:'2030-05-21',time:'15:02:01',zone:'America/New_York'});
+  const age = calculateAge(selected.instant);
+  assert.equal(selected.instant, Date.parse('2030-05-21T19:02:01Z'));
+  assert.deepEqual(fields(age), [18,0,0,0,0,1]);
+  assert.equal(age.totalSeconds, (selected.instant - BIRTH) / 1000);
+  assert.equal(age.nextBirthday, Date.parse('2031-05-21T19:02:00Z'));
+});
 test('birth instant and exact first second', () => {
   assert.deepEqual(fields(calculateAge(BIRTH)), [0,0,0,0,0,0]);
   assert.equal(BIRTH, Date.parse('2012-05-21T19:02:00Z'));

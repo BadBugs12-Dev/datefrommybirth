@@ -1,4 +1,5 @@
-import {calculateAge, birthdayCountdown, timestamp, ZONE} from './age.js';
+import {BIRTH, calculateAge, birthdayCountdown, timestamp, ZONE} from './age.js';
+import {parseZonedDateTime} from './custom-age.js';
 import {createCustomDashboard} from './custom-dashboard.js';
 const $ = id => document.getElementById(id);
 const number = n => n.toLocaleString('en-US');
@@ -6,6 +7,7 @@ const pad = n => String(n).padStart(2, '0');
 const decimal = (n, digits) => n.toLocaleString('en-US', {minimumFractionDigits: digits, maximumFractionDigits: digits});
 let base = null, clockSource = '', frozen = null, current = null, syncing = false, lastSample = null, toastTimer;
 let selectedBirthdayAge = null, birthdayOptionsStart = null;
+let selectedInstant = null, liveBirthdayAge = null;
 const customDashboard = createCustomDashboard({now:()=>base===null?null:base+performance.now(),clock:()=>({source:clockSource,lastSample,syncing}),resync:()=>sync(3),notify:toast});
 function set(id, value) { const el = $(id); if (el.textContent !== String(value)) el.textContent = value; }
 function selectedBirthday(a) {
@@ -13,7 +15,7 @@ function selectedBirthday(a) {
 }
 function updateBirthdayOptions(a) {
   const nextAge = a.years + 1;
-  if (selectedBirthdayAge !== null && selectedBirthdayAge < nextAge) selectedBirthdayAge = null;
+  if (selectedBirthdayAge !== null && selectedBirthdayAge <= nextAge) selectedBirthdayAge = null;
   if (birthdayOptionsStart !== nextAge) {
     const options = [];
     for (let age = nextAge; age <= Math.max(75, nextAge); age++) {
@@ -31,8 +33,9 @@ function updateBirthdayOptions(a) {
 }
 function render() {
   if (base === null) return;
-  const a = calculateAge(frozen ?? base + performance.now());
+  const a = calculateAge(selectedInstant ?? frozen ?? base + performance.now());
   current = a;
+  $('age-panel').classList.toggle('wide-age', a.years >= 100);
   for (const key of ['years','months','days','hours','minutes','seconds']) set(key, pad(a[key]));
   set('timestamp', timestamp(a.now));
   $('timestamp').dateTime = new Date(a.now).toISOString();
@@ -58,17 +61,27 @@ function render() {
   $('age-panel').setAttribute('aria-busy', 'false');
   $('freeze').disabled = false;
   $('copy').disabled = false;
+  $('target-show').disabled = false;
   customDashboard.render();
 }
 function updateStatus() {
   const isFrozen = frozen !== null;
-  $('mode-label').classList.toggle('frozen', isFrozen || clockSource === 'Device clock');
-  $('mode-label').replaceChildren(Object.assign(document.createElement('span'), {className:'dot'}), document.createTextNode(isFrozen ? ' FROZEN' : clockSource === 'Device clock' ? ' DEVICE TIME' : ' LIVE'));
+  const isSelected = selectedInstant !== null;
+  const mode = isSelected ? 'SELECTED' : isFrozen ? 'FROZEN' : clockSource === 'Device clock' ? 'DEVICE TIME' : 'LIVE';
+  $('mode-label').classList.toggle('frozen', isSelected || isFrozen || clockSource === 'Device clock');
+  $('mode-label').replaceChildren(Object.assign(document.createElement('span'), {className:'dot'}), document.createTextNode(' ' + mode));
+  set('age-title', isSelected ? 'AGE AT SELECTED DATE' : 'CURRENT AGE');
+  const paused = isSelected || isFrozen;
+  $('freeze').replaceChildren(
+    Object.assign(document.createElement('span'), {textContent:paused ? '▷' : 'Ⅱ', ariaHidden:'true'}),
+    document.createTextNode(paused ? ' Resume live' : ' Freeze moment')
+  );
   if (lastSample) {
     const when = new Intl.DateTimeFormat('en-US',{timeZone:ZONE,hour:'numeric',minute:'2-digit',second:'2-digit'}).format(lastSample.unixMs);
-    set('sync-status', `${isFrozen ? 'Snapshot frozen · ' : ''}Server synced at ${when} · ±${Math.ceil(lastSample.rtt / 2)} ms transit estimate`);
+    if (!isSelected) set('sync-status', `${isFrozen ? 'Snapshot frozen · ' : ''}Server synced at ${when} · ±${Math.ceil(lastSample.rtt / 2)} ms transit estimate`);
     set('sync-detail', `Last sample: ${new Date(lastSample.unixMs).toISOString()}. Round trip: ${Math.ceil(lastSample.rtt)} ms. Transit estimate: ±${Math.ceil(lastSample.rtt / 2)} ms, excluding server-clock error and network asymmetry.`);
-  } else set('sync-status', 'Device clock · server sync unavailable. Retry to verify time.');
+  } else if (!isSelected) set('sync-status', 'Device clock · server sync unavailable. Retry to verify time.');
+  if (isSelected) set('sync-status', 'Showing the selected date and time · Maryland time');
 }
 async function sync(samples = 1) {
   if (syncing) return;
@@ -99,7 +112,7 @@ async function sync(samples = 1) {
     }
     if (!best) {
       if (base === null) {base = Date.now() - performance.now(); clockSource = 'Device clock';render();updateStatus();}
-      else set('sync-status', `${frozen !== null ? 'Snapshot frozen · ' : ''}Resync failed · continuing from the last clock sample`);
+      else if (selectedInstant === null) set('sync-status', `${frozen !== null ? 'Snapshot frozen · ' : ''}Resync failed · continuing from the last clock sample`);
     }
   } finally {syncing = false; $('resync').disabled = false;}
 }
@@ -109,10 +122,65 @@ function toast(message) {
 }
 $('freeze').addEventListener('click', () => {
   if (!current) return;
+  if (selectedInstant !== null) {
+    resetTarget();
+    return;
+  }
   frozen = frozen === null ? current.now : null;
-  $('freeze').replaceChildren(Object.assign(document.createElement('span'), {textContent:frozen === null ? 'Ⅱ' : '▷',ariaHidden:'true'}), document.createTextNode(frozen === null ? ' Freeze moment' : ' Resume live'));
   updateStatus();render();
   toast(frozen === null ? 'Live resumed' : 'Snapshot frozen');
+});
+function resetTarget() {
+  $('target-form').reset();
+  $('target-occurrence-field').hidden = true;
+  set('target-error', '');
+  if (selectedInstant !== null) selectedBirthdayAge = liveBirthdayAge;
+  selectedInstant = null;
+  liveBirthdayAge = null;
+  frozen = null;
+  if (base !== null) {
+    updateStatus();
+    render();
+  }
+}
+$('target-reset').addEventListener('click', resetTarget);
+for (const field of ['target-date', 'target-time']) {
+  $(field).addEventListener('input', () => {
+    $('target-occurrence-field').hidden = true;
+    $('target-occurrence').value = 'earlier';
+    set('target-error', '');
+  });
+}
+$('target-occurrence').addEventListener('change', () => $('target-form').requestSubmit());
+$('target-form').addEventListener('submit', event => {
+  event.preventDefault();
+  set('target-error', '');
+  try {
+    const {instant, choices} = parseZonedDateTime({
+      date: $('target-date').value,
+      time: $('target-time').value,
+      zone: ZONE,
+      occurrence: $('target-occurrence').value
+    });
+    if (instant < BIRTH) throw new RangeError('Choose a date and time on or after your birth.');
+    $('target-occurrence-field').hidden = choices.length < 2;
+    if (choices.length > 1) {
+      for (const [index, option] of Array.from($('target-occurrence').options).entries()) {
+        const offset = timestamp(choices[index === 0 ? 0 : choices.length - 1]).split(' ').slice(2).join(' ');
+        option.textContent = `${index === 0 ? 'First' : 'Second'} · ${offset}`;
+      }
+    }
+    if (selectedInstant === null) {
+      liveBirthdayAge = selectedBirthdayAge;
+      selectedBirthdayAge = null;
+    }
+    selectedInstant = instant;
+    frozen = null;
+    updateStatus();
+    render();
+  } catch (error) {
+    set('target-error', error.message);
+  }
 });
 $('resync').addEventListener('click', () => sync(3));
 $('birthday-age').addEventListener('change', () => {
@@ -125,7 +193,8 @@ $('copy').addEventListener('click', async () => {
   const text = `DATE FROM MY BIRTH\nTimestamp: ${timestamp(a.now)}\nUTC: ${new Date(a.now).toISOString()}\nBirth: 2012-05-21 15:02:00 EDT (2012-05-21T19:02:00Z)\n\nAge: ${a.years} years, ${a.months} months, ${a.days} days, ${a.hours} hours, ${a.minutes} minutes, ${a.seconds} seconds\nDecimal years: approximately ${a.decimalYears.toFixed(12)}\nExact year expression: ${a.years} + ${a.yearElapsed}/${a.yearLength}\nFull 24-hour days: ${a.fullDays}\nTotal hours: ${a.totalSeconds}/3600 (exact); ${a.fullHours} hours + ${Math.floor(a.totalSeconds % 3600 / 60)} minutes + ${a.totalSeconds % 60} seconds\nTotal minutes: ${a.totalSeconds}/60 (exact); ${a.fullMinutes} minutes + ${a.totalSeconds % 60} seconds\nTotal seconds: ${a.totalSeconds}\nNext birthday: ${timestamp(a.nextBirthday)}\nRemaining: ${a.remaining.days} days, ${a.remaining.hours} hours, ${a.remaining.minutes} minutes, ${a.remaining.seconds} seconds (${a.remainingSeconds} seconds)\n\nCalendar units use America/New_York. Totals use standard Unix time; leap seconds excluded. ${clockSource}.`;
   const birthday = selectedBirthday(a);
   const selectedText = selectedBirthdayAge === null ? '' : `\n\nSelected birthday: Age ${birthday.age}, ${timestamp(birthday.target)}\nSelected countdown: ${birthday.remaining.days} days, ${birthday.remaining.hours} hours, ${birthday.remaining.minutes} minutes, ${birthday.remaining.seconds} seconds (${birthday.remainingSeconds} seconds)`;
-  try {await navigator.clipboard.writeText(text + selectedText);toast('Snapshot copied');}
+  const snapshot = selectedInstant === null ? text : text.replace(`${clockSource}.`, 'Selected Maryland date and time.');
+  try {await navigator.clipboard.writeText(snapshot + selectedText);toast('Snapshot copied');}
   catch {toast('Clipboard unavailable. You can select and copy the numbers.');}
 });
 document.addEventListener('visibilitychange', () => {if (!document.hidden) sync(3);});
